@@ -1,9 +1,10 @@
-[Package]
-name: "tnim"
-version: "1.0.1"
-author: "James Parkinson"
-description: "Nim REPL - a sandbox for testing Nim code"
-license: "MIT"
+# Package
+version     = "1.0.2"
+author      = "James Parkinson"
+description = "Nim REPL - a sandbox for testing Nim code"
+license     = "MIT"
+bin         = @["tnim"]
 
-[Deps]
-requires: "nim >= 0.10.0"
+# Dependencies
+
+requires @["nim >= 0.10.0"]
