@@ -37,7 +37,7 @@ import strutils, tables, os, osproc
 
 const
   TnimName     = "TNim"
-  TnimVersion  = 1.01
+  TnimVersion  = 1.02
   TnimStart    = "nim> "
   TnimContinue = ".... "   # add "..".repeat(n) before this
   SavedFileName = "tnim_dat.dat"
