@@ -15,29 +15,34 @@
 ## ---------
 ## .. code-block:: Nim
 ##
-##  \?, \h, \help              this information.
-##  \l, \list                  list the previous code history (line nr's)
-##  \ln, \listnr               list without line numbers (raw code listing).
-##  \c, \clear                 clear the current history buffer.
-##  \d, \delete [f [t]]        delete lines(s) [f [optionally to t]].
+##  \?,  \h, \help             this information.
+##  \l,  \list                 list the previous code history (w/ line nr's)
+##  \ln, \listnn               list with No (line) Numbers (raw code listing).
+##  \c,  \clear                clear the current history buffer.
+##  \d,  \delete [f [t]]       delete lines(s) [f [optionally to t]].
 ##                             delete last line if none specified.
-##  \e, \eval                  force the evaluation of the code buffer.
-##  \r, \read <filename>       read code from <filename> and run.
+##  \e,  \eval                 force the eval (compile/run) of the code buffer.
+##  \ec, \edconfig <editor>    define the path/name to an external editor
+##                             (if not defined, uses notepad (win) or vi)
+##  \ed, \edit                 edit code in the code buffer.
+##                             (then reloads the code buffer, lists the code,
+##                              and evals (compile/run) the code)
+##  \r,  \read <filename>      read code from <filename> and run.
 ##                             Saved history is read on startup.
 ##                             data from file is auto evaluated after reading.
-##  \s, \set [<option=value>]  set {maxBlocks,indent}
-##  \v, \version               display the name and version.
-##  \w, \write [<filename>]    write code history [to <filename>].
-##                             \w by itself overwrites saved history.
+##  \s,  \set [<option=value>] set {maxBlocks,indent}
+##  \v,  \version              display the name and version.
+##  \w,  \write [<filename>]   write code history [to <filename>].
+##                             \w by itself overwrites saved history (tnim_dat.dat).
 ##                             \c followed by \w clears saved history.
-##  \q, \quit                  quit, saving code history.
-##  \qc, \quitclear            quit, clearing code history.
+##  \q,  \quit                 quit, saving code history to tnim_dat.dat file.
+##  \qc, \quitclear            quit, clearing code history in tnim_dat.dat file.
 ##
 import strutils, tables, os, osproc, rdstdin
 
 const
   TnimName     = "TNim"
-  TnimVersion  = 1.02
+  TnimVersion  = 2.00
   TnimStart    = "nim> "
   TnimContinue = ".... "   # add "..".repeat(n) before this
   SavedFileName = "tnim_dat.dat"
@@ -46,6 +51,7 @@ const
 var
   maxBlocks = 100_000
   indentSize = 2
+  editorPath = ""
 
 type
   CodeBlock = object   ## blocks of code (a block is the outer scope level)
@@ -79,6 +85,8 @@ var
 proc tnimClear(w: seq[string])
 proc tnimDelete(w: seq[string])
 proc tnimEval(w: seq[string])
+proc tnimEdit(w: seq[string])
+proc tnimEdConfig(w: seq[string])
 proc tnimHelp(w: seq[string])
 proc tnimList(w: seq[string])
 proc tnimNrList(w: seq[string])
@@ -97,13 +105,17 @@ proc doInit() =
   inputCmds.add("\\l",            tnimNrList)
   inputCmds.add("\\list",         tnimNrList)
   inputCmds.add("\\ln",           tnimList)
-  inputCmds.add("\\listnr",       tnimList)
+  inputCmds.add("\\listnn",       tnimList)
   inputCmds.add("\\c",            tnimClear)
   inputCmds.add("\\clear",        tnimClear)
   inputCmds.add("\\d",            tnimDelete)
   inputCmds.add("\\delete",       tnimDelete)
   inputCmds.add("\\e",            tnimEval)
   inputCmds.add("\\eval",         tnimEval)
+  inputCmds.add("\\ed",           tnimEdit)
+  inputCmds.add("\\edit",         tnimEdit)
+  inputCmds.add("\\ec",           tnimEdConfig)
+  inputCmds.add("\\edconfig",     tnimEdConfig)
   inputCmds.add("\\v",            tnimVersion)
   inputCmds.add("\\version",      tnimVersion)
   inputCmds.add("\\w",            tnimWrite)
@@ -250,23 +262,28 @@ proc runEval(): tuple[errCode: int, resStr: string] =
 # ---------------- tnimXXXX command jump table procs --------------------
 proc tnimHelp(w: seq[string]) =
   echo """Commands (only one command per line):
-\?, \h, \help              this information.
-\l, \list                  list the previous code history (line nr's)
-\ln, \listnr               list without line numbers (raw code listing).
-\c, \clear                 clear the current history buffer.
-\d, \delete [f [t]]        delete lines(s) [f [optionally to t]].
+\?,  \h, \help             this information.
+\l,  \list                 list the previous code history (w/ line nr's)
+\ln, \listnn               list with No (line) Numbers (raw code listing).
+\c,  \clear                clear the current history buffer.
+\d,  \delete [f [t]]       delete lines(s) [f [optionally to t]].
                            delete last line if none specified.
-\e, \eval                  force the evaluation of the code buffer.
-\r, \read <filename>       read code from <filename> and run.
+\e,  \eval                 force the eval (compile/run) of the code buffer.
+\ec, \edconfig <editor>    define the path/name to an external editor
+                           (if not defined, uses notepad (win) or vi)
+\ed, \edit                 edit code in the code buffer.
+                           (then reloads the code buffer, lists the code,
+                            and evals (compile/run) the code)
+\r,  \read <filename>      read code from <filename> and run.
                            Saved history is read on startup.
                            data from file is auto evaluated after reading.
-\s, \set [<option=value>]  set {maxBlocks,indent}
-\v, \version               display the name and version.
-\w, \write [<filename>]    write code history [to <filename>].
-                           \w by itself overwrites saved history.
+\s,  \set [<option=value>] set {maxBlocks,indent}
+\v,  \version              display the name and version.
+\w,  \write [<filename>]   write code history [to <filename>].
+                           \w by itself overwrites saved history (tnim_dat.dat).
                            \c followed by \w clears saved history.
-\q, \quit                  quit, saving code history.
-\qc, \quitclear            quit, clearing code history.
+\q,  \quit                 quit, saving code history to tnim_dat.dat file.
+\qc, \quitclear            quit, clearing code history in tnim_dat.dat file.
 """
 
 proc deleteCodeLine(lineNrFrom: int, lineNrTo: int) =
@@ -294,19 +311,22 @@ proc listCode(f: File, withln = false) =
   if code.len == 0: return
   for cBlock in items(code):
     for s in cBlock.lines:
+      if i > 0: f.writeLine("")
       if withln:
-        f.writeLine(align($i,5) & ": " & s)
-        inc(i)
+        f.write(align($i,5) & ": " & s)
       else:
-        f.writeLine(s)
+        f.write(s)
+      inc(i)
 
 proc tnimList(w: seq[string]) =
   listCode(stdout)
   doEval = false
+  echo ""
 
 proc tnimNrList(w: seq[string]) =
   listCode(stdout, true)
   doEval = false
+  echo ""
 
 proc tnimClear(w: seq[string]) =
   blockNr = 0
@@ -385,6 +405,54 @@ proc tnimQuitClear(w: seq[string]) =
 proc tnimVersion(w: seq[string]) =
   writeLine(stdout, TnimName & " V" & $TnimVersion)
 
+proc tnimEdConfig(w: seq[string]) =
+  if w.len > 0:
+    editorPath = w[1]
+    echo "Editor: ",editorPath
+
+# -------------- EDIT ---------------------------
+proc getDefaultEditor(): bool =
+  var
+    cmd = ""
+    startStr = ""
+  if defined(windows):
+    cmd = "where notepad.exe"
+    startStr = "c:\\"
+  else:
+    cmd = "which vi"
+    startStr = "/"
+  result = false
+  let outp = execProcess(cmd)
+  if outp.toLowerAscii.startsWith(startStr):
+    editorPath = outp.splitLines()[0]
+    result = editorPath.len > 0
+    #echo "outp: ",outp
+    #echo "Editor: ",editorPath
+
+proc tnimEdit(w: seq[string]) =
+  ## If an editorPath defined, use that editor
+  ## Else
+  ## clear the screen, display the code buffer
+  ## and change the code
+  var
+    res = 0
+  if editorPath == "":
+    if not getDefaultEditor():
+      echo "Please define an editor (\ec)"
+      return
+  if not editorPath.fileExists:
+    echo "Error: " & editorPath & " not found"
+    editorPath = ""
+  else:
+    res = execCmd(editorPath & " tnim_dat.dat")
+    if res == 0:
+      tnimClear(@[])
+      tnimRead(@[SavedFileName])
+      tnimNrList(@[])
+      tnimEval(@[])
+    else:
+      echo "Editing failed: returned ",res
+
 # -------------- EVAL ---------------------------
 proc nimEval(inp: string): tuple[res: bool, resStr: string] =
   # true if something to print
@@ -454,12 +522,9 @@ proc nimEval(inp: string): tuple[res: bool, resStr: string] =
 proc print(s: string) {.inline.} =
   writeLine(stdout, s)
 
-proc startMsg(): string =
+proc startMsg(): string {.inline.} =
   ## when indented, print the "..." else the "nim> " text
-  if currIndent == 0:
-    TnimStart
-  else:
-    TnimContinue
+  result = (if currIndent == 0: TnimStart else: TnimContinue)
 
 # -------------- REPL ---------------------------
 proc REPL() =
@@ -478,6 +543,11 @@ proc main() =
   tnimRead(@[SavedFileName])
   # get command line options
   getCmdLineOpts()
+  # display version
+  tnimVersion(@[])
+  # display help commands
+  tnimHelp(@[])
+  print(startMsg())
   # show current code buffer
   tnimNrList(@[])
   # and away it runs
