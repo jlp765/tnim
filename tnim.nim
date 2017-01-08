@@ -33,7 +33,7 @@
 ##  \q, \quit                  quit, saving code history.
 ##  \qc, \quitclear            quit, clearing code history.
 ##
-import strutils, tables, os, osproc
+import strutils, tables, os, osproc, rdstdin
 
 const
   TnimName     = "TNim"
@@ -454,12 +454,12 @@ proc nimEval(inp: string): tuple[res: bool, resStr: string] =
 proc print(s: string) {.inline.} =
   writeLine(stdout, s)
 
-proc printStartMsg() =
+proc startMsg(): string =
   ## when indented, print the "..." else the "nim> " text
   if currIndent == 0:
-    write(stdout, TnimStart)
+    TnimStart
   else:
-    write(stdout, TnimContinue)
+    TnimContinue
 
 # -------------- REPL ---------------------------
 proc REPL() =
@@ -467,10 +467,9 @@ proc REPL() =
   var
     inp = ""
   while not getOut:
-    printStartMsg()
-    inp = readLine(stdin)             # R
-    let (res, resStr) = nimEval(inp)  # E
-    if res: print(resStr)             # P
+    inp = readLineFromStdin(startMsg()) # R
+    let (res, resStr) = nimEval(inp)    # E
+    if res: print(resStr)               # P
 
 
 proc main() =
