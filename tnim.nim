@@ -410,6 +410,11 @@ proc setEditorAsDefault(): bool =
   var
     cmd = ""
     startStr = ""
+  # Before looking up the path, try the EDITOR environment variable.
+  if existsEnv("EDITOR"):
+    editorPath = getEnv("EDITOR")
+    return true
+
   if defined(windows):
     cmd = "where notepad.exe"
     startStr = "c:\\"
@@ -421,8 +426,6 @@ proc setEditorAsDefault(): bool =
   if outp.toLowerAscii.startsWith(startStr):
     editorPath = outp.splitLines()[0]
     result = editorPath.len > 0
-    #echo "outp: ",outp
-    #echo "Editor: ",editorPath
 
 proc checkOrSetEditor(): bool =
   ## Check for the existence of an editorPath, and if it doesn't exist, attempt
