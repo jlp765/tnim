@@ -405,16 +405,16 @@ proc tnimQuitClear(w: seq[string]) =
 proc tnimVersion(w: seq[string]) =
   writeLine(stdout, TnimName & " V" & $TnimVersion)
 
-proc tnimEdConfig(w: seq[string]) =
-  if w.len > 0:
-    editorPath = w[1]
-    echo "Editor: ",editorPath
-
 # -------------- EDIT ---------------------------
-proc getDefaultEditor(): bool =
+proc setEditorAsDefault(): bool =
   var
     cmd = ""
     startStr = ""
+  # Before looking up the path, try the EDITOR environment variable.
+  if existsEnv("EDITOR"):
+    editorPath = getEnv("EDITOR")
+    return true
+
   if defined(windows):
     cmd = "where notepad.exe"
     startStr = "c:\\"
@@ -426,8 +426,23 @@ proc getDefaultEditor(): bool =
   if outp.toLowerAscii.startsWith(startStr):
     editorPath = outp.splitLines()[0]
     result = editorPath.len > 0
-    #echo "outp: ",outp
-    #echo "Editor: ",editorPath
+
+proc checkOrSetEditor(): bool =
+  ## Check for the existence of an editorPath, and if it doesn't exist, attempt
+  ## to set from the default.
+  if editorPath == "":
+    result = setEditorAsDefault()
+    if not result:
+      echo "Please define an editor (\ec)"
+  else:
+    result = true
+
+proc tnimEdConfig(w: seq[string]) =
+  if w.len > 1:
+    editorPath = w[1]
+  else:
+    discard checkOrSetEditor()
+  echo "Editor: ",editorPath
 
 proc tnimEdit(w: seq[string]) =
   ## If an editorPath defined, use that editor
@@ -436,10 +451,7 @@ proc tnimEdit(w: seq[string]) =
   ## and change the code
   var
     res = 0
-  if editorPath == "":
-    if not getDefaultEditor():
-      echo "Please define an editor (\ec)"
-      return
+  if not checkOrSetEditor(): return
   if not editorPath.fileExists:
     echo "Error: " & editorPath & " not found"
     editorPath = ""
