@@ -9,6 +9,11 @@ The code buffer is saved to the file **tnim_dat.dat** (in the "current" director
 
 ## Changes
 
+2.1
+---
+
+* EDITOR environment variable if set defines the default editor (thanks **@subsetpark**)
+
 2.0
 ---
 
