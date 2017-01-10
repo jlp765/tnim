@@ -42,7 +42,7 @@ import strutils, tables, os, osproc, rdstdin
 
 const
   TnimName     = "TNim"
-  TnimVersion  = 2.00
+  TnimVersion  = 2.01
   TnimStart    = "nim> "
   TnimContinue = ".... "   # add "..".repeat(n) before this
   SavedFileName = "tnim_dat.dat"
