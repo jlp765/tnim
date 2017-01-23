@@ -6,5 +6,4 @@ license     = "MIT"
 #bin         = "tnim"
 
 [Dependencies]
-
-requires "nim >= 0.10.0"
+requires: "nim >= 0.10.0"
