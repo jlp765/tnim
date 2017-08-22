@@ -16,7 +16,7 @@ The code buffer is saved to the file **tnim_dat.dat** (in the "current" director
 (alternately, you can copy/link the tnim executable to a suitable location)
 
 ## Changes
-2.1
+2.2
 ---
 
 * If there is a compilation error, the last line of code is removed from the code buffer.  (https://github.com/jlp765/tnim/issues/6)
