@@ -1,15 +1,26 @@
-## **tnim** (TinyNim) is an interactive REPL
+## **TNim** (TinyNim) is a quasi-interactive REPL
 ##
 ## It is a stop-gap replacement for the
-## functionality that was in old versions of Nim.
+## functionality that was in old versions of Nim, and
+## is now
+## ``nim secret``
+## (note: nim secret uses the VM in Nim, so it only allows the import of a subset of modules)
 ##
-## It compiles and runs code exactly (?) the same
-## way you would by hand, and does this using a shell
+## It compiles and runs code similar to the
+## way you would do this, and does this using a shell
 ## command in the background (
 ## ``nim c -r --verbosity:0 --hints:off <file>`` )
 ##
 ##  *Warning: this is SLOW!!.  It is a quick and dirty
 ##  interactive tool, not a sleek and shiny speed demon.*
+##
+## If you need to work with blocks of code as part of some project, then TNim can be primed with this code
+## prior to being run (rather than having to paste chunks of code into TNim).  Add this code to
+## the `SavedFileName<#SavedFileName>`_ (tnim_dat.dat), then run TNim.
+##
+## If the buffers are not cleared (``\qc`` or ``\c``), then the code will remain in
+## the `SavedFileName<#SavedFileName>`_, and
+## will be available next time TNim is run.
 ##
 ## Commands:
 ## ---------
@@ -38,20 +49,25 @@
 ##  \q,  \quit                 quit, saving code history to tnim_dat.dat file.
 ##  \qc, \quitclear            quit, clearing code history in tnim_dat.dat file.
 ##
+## Vars and Consts
+## -----
+## The Vars and Consts Sections is included to provide clues about the TNim internal settings.
+##
 import strutils, tables, os, osproc, rdstdin
 
 const
-  TnimName     = "TNim"
-  TnimVersion  = 2.01
-  TnimStart    = "nim> "
-  TnimContinue = ".... "   # add "..".repeat(n) before this
-  SavedFileName = "tnim_dat.dat"
+  TnimName*      = "TNim"
+  TnimVersion*   = 2.02
+  TnimStart*     = "nim> "         ## the TNim prompt
+  TnimContinue*  = ".... "         #  add "..".repeat(n) before this
+  SavedFileName* = "tnim_dat.dat"  ## this file will hold the code you have typed (until cleared), or you can add code
+                                   ## to this before file prior to running TNim
 
 # run-time Configurable but effectively const Config variables
 var
-  maxBlocks = 100_000
-  indentSize = 2
-  editorPath = ""
+  maxBlocks*  = 100_000   ##  code blocks, or lines of code not in a code block
+  indentSize* = 2
+  editorPath* = ""        ## set this via \ec command
 
 type
   CodeBlock = object   ## blocks of code (a block is the outer scope level)
@@ -247,7 +263,15 @@ proc filterRunLines[T](s: T): string =
     if linkStr != "": result = linkStr
     else: result = s.strip()
 
+proc deleteLastLine()          # fwd decl
+
 proc runEval(): tuple[errCode: int, resStr: string] =
+  # (silently) compile the code using Nim, and return any errors
+  # for displaying to stdout
+  # Remove the offending last line of source code.
+  # NB: If pasting in a multi lines of code with an error in it,
+  #     the last line will be deleted but may not be the offending
+  #     line of code  :-)
   var
     resStr = ""
   tnimWrite(@[SavedFileName])
@@ -255,6 +279,8 @@ proc runEval(): tuple[errCode: int, resStr: string] =
   # OOPS - Compile or Run failed!!
   if exitCode != 0:
     resStr = filterCompileLines(outp)
+    # remove offending code line (stdin history exists to see what last line was)
+    deleteLastLine()
   if resStr == "":
     resStr = filterRunLines(outp)
   return (exitCode, resStr)
@@ -306,6 +332,20 @@ proc deleteCodeLine(lineNrFrom: int, lineNrTo: int) =
         code[cb].lines.delete(j)
       dec(i)
 
+proc lastLineNr(): int =
+  var i = 0
+  if code.len == 0: return -1
+  for cBlock in items(code):
+    for s in cBlock.lines:
+      inc(i)
+  return i - 1
+
+proc deleteLastLine() =
+  # if an error compiling, then this is called
+  # to delete last line of code
+  let lln = lastLineNr()
+  deleteCodeLine(lln, lln)
+
 proc listCode(f: File, withln = false) =
   var i = 0
   if code.len == 0: return
@@ -317,6 +357,8 @@ proc listCode(f: File, withln = false) =
       else:
         f.write(s)
       inc(i)
+
+# --------- tnimXXXXX() procedures -----------------
 
 proc tnimList(w: seq[string]) =
   listCode(stdout)
@@ -399,8 +441,7 @@ proc tnimQuit(w: seq[string]) =
 
 proc tnimQuitClear(w: seq[string]) =
   tnimClear(w)
-  getOut = true
-  doEval = false
+  tnimQuit(w)
 
 proc tnimVersion(w: seq[string]) =
   writeLine(stdout, TnimName & " V" & $TnimVersion)
