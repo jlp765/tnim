@@ -7,6 +7,14 @@ Instructions are in the **tnim.html** file or **\?** at the tnim command line
 
 The code buffer is saved to the file **tnim_dat.dat** (in the "current" directory).  You can add code to this file if you want to do development using a REPL interface.
 
+*Note from Nimble doco (ensuring tnim can run):* 
+
+* Nimble stores everything that has been installed in ~/.nimble on Unix systems and in your $home/.nimble on Windows. Libraries are stored in $nimbleDir/pkgs, and binaries are stored in **$nimbleDir/bin**. 
+
+* However, some Nimble packages can provide additional tools or commands. **If you don't add their location ($nimbleDir/bin) to your $PATH** they will not work properly and you won't be able to run them.
+
+(alternately, you can copy/link the tnim executable to a suitable location)
+
 ## Changes
 2.1
 ---
@@ -15,6 +23,11 @@ The code buffer is saved to the file **tnim_dat.dat** (in the "current" director
 
 NB: This assumes the code was typed and the error is with the last line.  If multi lines of code has been pasted into stdin and the last line of code is not in error, 
 then you will need to add the last line of code back, as well as fix whichever line has an error.
+
+2.1
+---
+
+* EDITOR environment variable if set defines the default editor (thanks **@subsetpark**)
 
 2.0
 ---
