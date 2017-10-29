@@ -16,6 +16,11 @@ The code buffer is saved to the file **tnim_dat.dat** (in the "current" director
 (alternately, you can copy/link the tnim executable to a suitable location)
 
 ## Changes
+2.0.3
+-----
+
+Minor nimble config change.
+
 2.0.2
 -----
 
