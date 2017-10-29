@@ -1,6 +1,8 @@
 # tnim
 TinyNim - a REPL for Nim 
 
+*Try* **Nim Playground** *(https://play.nim-lang.org/) for an online experience*
+
 This is an interactive sandbox for testing Nim code
 
 Instructions are in the **tnim.html** file or **\?** at the tnim command line
