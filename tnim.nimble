@@ -1,10 +1,11 @@
 [Package]
 name        = "tnim"
-version     = "2.0.2"
+version     = "2.0.3"
 author      = "James Parkinson"
 description = "Nim REPL - a sandbox for testing Nim code"
 license     = "MIT"
-bin         = "tnim"
+
+bin         = @["tnim"]
 
 [Deps]
 requires: "nim >= 0.10.0"
