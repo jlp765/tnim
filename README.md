@@ -5,6 +5,12 @@ TinyNim - a REPL for Nim
 
 This is an interactive sandbox for testing Nim code
 
+`nim secret` also provides an interactive NIM experience (note: `nim secret` uses the VM in Nim, so it only allows the import of a subset of modules)
+
+*`tnim` is SLOW!!.  It is a quick and dirty interactive tool, not a sleek and shiny speed demon.*
+
+`tnim` is assumed to not work with multitasking (async library, et. al.)
+
 Instructions are in the **tnim.html** file or **\?** at the tnim command line
 
 The code buffer is saved to the file **tnim_dat.dat** (in the "current" directory).  You can add code to this file if you want to do development using a REPL interface.
@@ -18,6 +24,11 @@ The code buffer is saved to the file **tnim_dat.dat** (in the "current" director
 (alternately, you can copy/link the tnim executable to a suitable location)
 
 ## Changes
+2.0.4
+-----
+
+Minor readability changes.
+
 2.0.3
 -----
 
