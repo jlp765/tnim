@@ -57,7 +57,7 @@ import strutils, tables, os, osproc, rdstdin
 
 const
   TnimName*      = "TNim"
-  TnimVersion*   = 2.03
+  TnimVersion*   = 2.04
   TnimStart*     = "nim> "         ## the TNim prompt
   TnimContinue*  = ".... "         #  add "..".repeat(n) before this
   SavedFileName* = "tnim_dat.dat"  ## this file will hold the code you have typed (until cleared), or you can add code
@@ -230,6 +230,7 @@ proc filterCompileLines[T](s: T): string =
   var
     tStr = ""
     tStr2 = ""
+    codeLine = ""
     lineNr = 0
     posNr = 0
   for line in s.splitLines():
@@ -238,8 +239,8 @@ proc filterCompileLines[T](s: T): string =
       tStr2 = tStr[find(tStr,"Error")..<tStr.len]
       lineNr = tStr.getInt()
       posNr = tStr[($lineNr).len+2..<tStr.len].getInt()
-      result = getCodeLine(lineNr) & "\n" & " ".repeat(posNr-1) & "^\n"
-      result &= tStr2 & "\n"
+      codeLine = getCodeLine(lineNr) & "\n" & " ".repeat(posNr-1) & "^\n"
+      result = codeLine & tStr2 & "\n"
     elif tStr != "":
       result &= line
 
@@ -579,13 +580,21 @@ proc startMsg(): string {.inline.} =
   ## when indented, print the "..." else the "nim> " text
   result = (if currIndent == 0: TnimStart else: TnimContinue)
 
+# -------------- READ ---------------------------
+proc readFromStdin(msg: string): string =
+  result = r"\qc"
+  try:
+    result = readLineFromStdin(msg)
+  except:
+    tnimQuitClear(@[r"\qc"])
+
 # -------------- REPL ---------------------------
 proc REPL() =
   ## main processing loop
   var
     inp = ""
   while not getOut:
-    inp = readLineFromStdin(startMsg()) # R
+    inp = readFromStdin(startMsg()) # R
     let (res, resStr) = nimEval(inp)    # E
     if res: print(resStr)               # P
 
