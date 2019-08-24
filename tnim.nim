@@ -559,7 +559,7 @@ proc nimEval(inp: string): tuple[res: bool, resStr: string] =
     # proc() definition on multi lines
     elif ident > 0 and lastWrd[lastWrd.len-1] == '=':
       inc(currIndent)
-    elif iput[0][0..4] == "block":
+    elif iput[0].startsWith("block"):
       inc(currIndent)
     #elif ident != -1:
     #  errMsg("indentation is incorrect")
@@ -582,11 +582,13 @@ proc startMsg(): string {.inline.} =
 
 # -------------- READ ---------------------------
 proc readFromStdin(msg: string): string =
-  result = r"\qc"
+  # quit without clearing so that work is 
+  # saved if Ctrl-D hit by mistake
+  result = r"\q"
   try:
     result = readLineFromStdin(msg)
   except:
-    tnimQuitClear(@[r"\qc"])
+    tnimQuit(@[r"\q"])
 
 # -------------- REPL ---------------------------
 proc REPL() =
