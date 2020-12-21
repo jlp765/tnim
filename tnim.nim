@@ -115,35 +115,35 @@ proc tnimVersion(w: seq[string])
 
 # ---------------- general stuff ------------------
 proc doInit() =
-  inputCmds.add(r"\?",            tnimHelp)
-  inputCmds.add(r"\h",            tnimHelp)
-  inputCmds.add(r"\help",         tnimHelp)
-  inputCmds.add(r"\l",            tnimNrList)
-  inputCmds.add(r"\list",         tnimNrList)
-  inputCmds.add(r"\ln",           tnimList)
-  inputCmds.add(r"\listnn",       tnimList)
-  inputCmds.add(r"\c",            tnimClear)
-  inputCmds.add(r"\clear",        tnimClear)
-  inputCmds.add(r"\d",            tnimDelete)
-  inputCmds.add(r"\delete",       tnimDelete)
-  inputCmds.add(r"\e",            tnimEval)
-  inputCmds.add(r"\eval",         tnimEval)
-  inputCmds.add(r"\ed",           tnimEdit)
-  inputCmds.add(r"\edit",         tnimEdit)
-  inputCmds.add(r"\ec",           tnimEdConfig)
-  inputCmds.add(r"\edconfig",     tnimEdConfig)
-  inputCmds.add(r"\v",            tnimVersion)
-  inputCmds.add(r"\version",      tnimVersion)
-  inputCmds.add(r"\w",            tnimWrite)
-  inputCmds.add(r"\write",        tnimWrite)
-  inputCmds.add(r"\r",            tnimRead)
-  inputCmds.add(r"\read",         tnimRead)
-  inputCmds.add(r"\s",            tnimSet)
-  inputCmds.add(r"\set",          tnimSet)
-  inputCmds.add(r"\q",            tnimQuit)
-  inputCmds.add(r"\quit",         tnimQuit)
-  inputCmds.add(r"\qc",           tnimQuitClear)
-  inputCmds.add(r"\quitclear",    tnimQuitClear)
+  inputCmds[r"\?"        ] = tnimHelp
+  inputCmds[r"\h"        ] = tnimHelp
+  inputCmds[r"\help"     ] = tnimHelp
+  inputCmds[r"\l"        ] = tnimNrList
+  inputCmds[r"\list"     ] = tnimNrList
+  inputCmds[r"\ln"       ] = tnimList
+  inputCmds[r"\listnn"   ] = tnimList
+  inputCmds[r"\c"        ] = tnimClear
+  inputCmds[r"\clear"    ] = tnimClear
+  inputCmds[r"\d"        ] = tnimDelete
+  inputCmds[r"\delete"   ] = tnimDelete
+  inputCmds[r"\e"        ] = tnimEval
+  inputCmds[r"\eval"     ] = tnimEval
+  inputCmds[r"\ed"       ] = tnimEdit
+  inputCmds[r"\edit"     ] = tnimEdit
+  inputCmds[r"\ec"       ] = tnimEdConfig
+  inputCmds[r"\edconfig" ] = tnimEdConfig
+  inputCmds[r"\v"        ] =  tnimVersion
+  inputCmds[r"\version"  ] = tnimVersion
+  inputCmds[r"\w"        ] = tnimWrite
+  inputCmds[r"\write"    ] = tnimWrite
+  inputCmds[r"\r"        ] = tnimRead
+  inputCmds[r"\read"     ] = tnimRead
+  inputCmds[r"\s"        ] = tnimSet
+  inputCmds[r"\set"      ] =  tnimSet
+  inputCmds[r"\q"        ] = tnimQuit
+  inputCmds[r"\quit"     ] =  tnimQuit
+  inputCmds[r"\qc"       ] = tnimQuitClear
+  inputCmds[r"\quitclear"] =  tnimQuitClear
 
 proc errMsg(s:string) =
   writeLine(stderr, TnimStart & "Error: " & s)
@@ -534,7 +534,6 @@ proc nimEval(inp: string): tuple[res: bool, resStr: string] =
     if blockNr == maxBlocks:
       errMsg("History buffer is full.  Write(\\w) and/or Clear (\\c) the history")
       return (res, resStr)
-    {.breakpoint: "x" .}
     # handle a line of code, checking if indent is required
     let ident = getIndent(inp)
     #if ident == currIndent:             # ident should match currIndent
@@ -559,7 +558,7 @@ proc nimEval(inp: string): tuple[res: bool, resStr: string] =
     # proc() definition on multi lines
     elif ident > 0 and lastWrd[lastWrd.len-1] == '=':
       inc(currIndent)
-    elif iput[0].startsWith("block"):
+    elif iput[0][0..4] == "block":
       inc(currIndent)
     #elif ident != -1:
     #  errMsg("indentation is incorrect")
@@ -582,13 +581,11 @@ proc startMsg(): string {.inline.} =
 
 # -------------- READ ---------------------------
 proc readFromStdin(msg: string): string =
-  # quit without clearing so that work is 
-  # saved if Ctrl-D hit by mistake
-  result = r"\q"
+  result = r"\qc"
   try:
     result = readLineFromStdin(msg)
   except:
-    tnimQuit(@[r"\q"])
+    tnimQuitClear(@[r"\qc"])
 
 # -------------- REPL ---------------------------
 proc REPL() =
