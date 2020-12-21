@@ -24,15 +24,21 @@ The code buffer is saved to the file **tnim_dat.dat** (in the "current" director
 (alternately, you can copy/link the tnim executable to a suitable location)
 
 ## Changes
+2.0.5
+-----
+
+* Minor change of .add() to []= for table related code (eliminate deprecation warnings)
+* Bug fix: check code length when checking for "block"
+
 2.0.4
 -----
 
-Minor readability changes.
+* Minor readability changes.
 
 2.0.3
 -----
 
-Minor nimble config change.
+* Minor nimble config change.
 
 2.0.2
 -----
